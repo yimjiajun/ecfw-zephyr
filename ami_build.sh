@@ -6,8 +6,6 @@ zephyr_west_manifest_path="${zephyr_build_script_path}/ecfwwork"
 function parameters_selection() {
     parameters=("chipset" "series" "soc")
     declare -A info
-    info["chipset"]=""
-    info["soc"]=""
 
     function parameters_review() {
         local index=0
