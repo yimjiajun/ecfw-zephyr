@@ -16,6 +16,10 @@ function check_and_setup_parameters() {
         set_zephyr_board=" "
         zephyr_board="$BOARD"
     fi
+
+    if [ -z "$ZEPHYR_TOOLCHAIN_VARIANT" ]; then
+        export ZEPHYR_TOOLCHAIN_VARIANT='zephyr'
+    fi
 }
 
 function check_and_setup_west_topdir() {
