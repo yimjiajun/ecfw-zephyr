@@ -80,5 +80,5 @@ setup_microchip_config
 if [ -z "$ZEPHYR_TOOLCHAIN_VARIANT" ]; then
     export ZEPHYR_TOOLCHAIN_VARIANT='zephyr'
 fi
-
-west build $set_zephyr_board -p=always -d build $set_zephyr_dconfig
+zephyr_app_path="${zephyr_west_topdir}/$(west config --local manifest.path)"
+west build $set_zephyr_board -p=always -d build $set_zephyr_dconfig "${zephyr_app_path}"
