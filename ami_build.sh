@@ -39,6 +39,44 @@ function check_and_setup_west_topdir() {
 }
 
 function setup_microchip_config() {
+    # "mec_spi_gen_info" array contains below keys:
+    # - "series": microchip series compatible with CPGZephyrDocs directory. ex. MEC1501, MEC152x, MEC172x
+    # - "generator": spi generator file name. ex. everglades_spi_gen_lin64, everglades_spi_gen_RomE, mec172x_spi_gen_lin_x86_64
+    # - "env": environment variable to set spi generator path. ex. EVERGLADES_SPI_GEN, MEC172X_SPI_GEN
+    declare -A mec_spi_gen_info
+
+    function setup_microchip_generator() {
+        if [[ $zephyr_board == "mec150"* ]]; then
+            mec_spi_gen_info["series"]="MEC1501"
+            mec_spi_gen_info["generator"]="everglades_spi_gen_lin64"
+            mec_spi_gen_info["env"]="EVERGLADES_SPI_GEN"
+
+            if [[ $zephyr_board == *"modular_assy"* ]]; then
+                set_zephyr_dconfig="-- -DCONFIG_MEC15XX_AIC_ON_TGL=y"
+            fi
+        elif [[ $zephyr_board == "mec152"* ]]; then
+            mec_spi_gen_info["series"]="MEC152x"
+            mec_spi_gen_info["generator"]="everglades_spi_gen_RomE"
+            mec_spi_gen_info["env"]="EVERGLADES_SPI_GEN"
+            set_zephyr_board="--board mec1501_adl" # MEC152x compatible with MEC1501 in zephyr board
+
+            if [[ $zephyr_board == *"modular_assy"* ]]; then
+                set_zephyr_dconfig="-- -DCONFIG_MEC15XX_AIC_ON_TGL=y"
+            fi
+        elif [[ $zephyr_board == "mec172"* ]]; then
+            mec_spi_gen_info["series"]="MEC172x"
+            mec_spi_gen_info["generator"]="mec172x_spi_gen_lin_x86_64"
+            mec_spi_gen_info["env"]="MEC172X_SPI_GEN"
+
+            if [[ $zephyr_board == *"modular_assy"* ]]; then
+                set_zephyr_dconfig=" "
+            fi
+        else
+            echo "$zephyr_board is not supporting in ecfw project"
+            exit 1
+        fi
+    }
+
     set_zephyr_dconfig=" "
     zephyr_mec_spi_gen_path="${zephyr_west_manifest_path}/CPGZephyrDocs"
     mec_cpgzephyrdocs_repo="https://github.com/MicrochipTech/CPGZephyrDocs.git"
@@ -51,26 +89,22 @@ function setup_microchip_config() {
         }
     fi
 
-    if [[ $zephyr_board == "mec150"* ]]; then
-        export EVERGLADES_SPI_GEN="$zephyr_west_topdir/$zephyr_mec_spi_gen_path/MEC1501/SPI_image_gen/everglades_spi_gen_lin64"
-        if [[ $zephyr_board == *"modular_assy"* ]]; then
-            set_zephyr_dconfig="-- -DCONFIG_MEC15XX_AIC_ON_TGL=y"
-        fi
-    elif [[ $zephyr_board == "mec152"* ]]; then
-        export EVERGLADES_SPI_GEN="$zephyr_west_topdir/$zephyr_mec_spi_gen_path/MEC152x/SPI_image_gen/everglades_spi_gen_RomE"
-        set_zephyr_board="-b mec1501_adl"
-        if [[ $zephyr_board == *"modular_assy"* ]]; then
-            set_zephyr_dconfig="-- -DCONFIG_MEC15XX_AIC_ON_TGL=y"
-        fi
-    elif [[ $zephyr_board == "mec172"* ]]; then
-        export MEC172X_SPI_GEN="$zephyr_west_topdir/$zephyr_mec_spi_gen_path/MEC172x/SPI_image_gen/mec172x_spi_gen_lin_x86_64"
-        if [[ $zephyr_board == *"modular_assy"* ]]; then
-            set_zephyr_dconfig=" "
-        fi
-    else
-        echo "$zephyr_board is not supporting in ecfw project"
+    setup_microchip_generator
+    mec_spi_gen_chip_series_dir="${zephyr_mec_spi_gen_path}/${mec_spi_gen_info["series"]}"
+
+    if [ ! -d "${mec_spi_gen_chip_series_dir}" ]; then
+        echo "${mec_spi_gen_chip_series_dir} directory not found for ${zephyr_board}"
         exit 1
     fi
+
+    mec_spi_gen="$(find ${mec_spi_gen_chip_series_dir} -name "${mec_spi_gen_info["generator"]}" -type f -print 2>/dev/null)"
+
+    if [ -z "${mec_spi_gen_info["generator"]}" ]; then
+        echo "spi generator not found for ${zephyr_board}"
+        exit 1
+    fi
+
+    export "${mec_spi_gen_info["env"]}"="${mec_spi_gen}"
 }
 
 check_and_setup_parameters
