@@ -77,8 +77,6 @@ check_and_setup_parameters
 check_and_setup_west_topdir
 setup_microchip_config
 
-if [ -z "$ZEPHYR_TOOLCHAIN_VARIANT" ]; then
-    export ZEPHYR_TOOLCHAIN_VARIANT='zephyr'
-fi
+
 
 west build $set_zephyr_board -p=always -d build $set_zephyr_dconfig
