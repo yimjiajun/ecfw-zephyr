@@ -115,9 +115,6 @@ function setup_microchip_config() {
 check_and_setup_parameters
 check_and_setup_west_topdir
 
-if [ -z "$ZEPHYR_TOOLCHAIN_VARIANT" ]; then
-    export ZEPHYR_TOOLCHAIN_VARIANT='zephyr'
-fi
 if [[ "${zephyr_board}" =~ ^mec[[:digit:]]{2}.* ]]; then
     setup_microchip_config
 fi
