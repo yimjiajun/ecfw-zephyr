@@ -4,7 +4,7 @@ zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="${zephyr_build_script_path}/ecfwwork"
 
 function parameters_selection() {
-    parameters=("chipset" "series" "soc")
+    parameters=("soc" "chipset" "series")
     declare -A info
 
     function parameters_review() {
@@ -44,9 +44,60 @@ function parameters_selection() {
         done
     }
 
+    function board_setup() {
+        declare -A board_info
+
+        case ${info["soc"]} in
+            "Alder Lake")
+                board_info["soc"]="adl"
+                ;;
+            "Alder Lake P")
+                board_info["soc"]="adl_p"
+                ;;
+            *)
+                echo "soc ${info["soc"]} is not supporting in ecfw project"
+                exit 1
+                ;;
+        esac
+
+        case ${info["chipset"]} in
+            "microchip")
+                board_info["chipset"]="mec"
+                ;;
+            *)
+                echo "chipset ${info["chipset"]} is not supporting in ecfw project"
+                exit 1
+                ;;
+        esac
+
+        case ${info["series"]} in
+            "152x")
+                board_info["series"]="1501"
+                ;;
+            "172x")
+                board_info["series"]="1723"
+                ;;
+            *)
+                board_info["series"]="${info["series"]}"
+                ;;
+        esac
+
+        zephyr_board="${board_info["chipset"]}${board_info["series"]}_${board_info["soc"]}"
+        echo "zephyr board: ${zephyr_board}"
+    }
+
+
+    parameter_setup "soc" "Alder Lake" "Alder Lake P"
     parameter_setup "chipset" "microchip"
-    parameter_setup "series" "mec1501" "mec152x" "mec172x"
-    parameter_setup "soc" "Alder Lake"
+
+    if [[ ${info["chipset"]} == "microchip" ]]; then
+        parameter_setup "series" "1501" "152x" "172x"
+    else
+        echo "chipset ${info["chipset"]} is not supporting in ecfw project"
+        exit 1
+    fi
+
+    board_setup
 }
 
 function check_and_setup_parameters() {
