@@ -3,6 +3,54 @@
 zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="${zephyr_build_script_path}/ecfwwork"
 
+function parameters_selection() {
+    parameters=("chipset" "series" "soc")
+    declare -A info
+    info["chipset"]=""
+    info["soc"]=""
+
+    function parameters_review() {
+        local index=0
+        tput clear
+        echo "Information:"
+
+        while [ ${index} -lt "${#parameters[@]}" ]; do
+            local p="${parameters[${index}]}"
+            echo "- ${p}:" "${info[${p}]}"
+            index=$((index + 1))
+        done
+    }
+
+    function parameter_setup() {
+        local name="$1"; shift
+        local selection=("$@")
+
+        parameters_review
+        echo -e "\nPlease select ${name}:"
+        select s in "${selection[@]}" 'exit'; do
+            case ${s} in
+                'exit')
+                    exit 0
+                    ;;
+
+                *)
+                    for v in "${selection[@]}"; do
+                        if [[ "${v}" == "${s}" ]]; then
+                            info["${name}"]="${s}"
+                            parameters_review
+                            return 0
+                        fi
+                    done
+                    ;;
+            esac
+        done
+    }
+
+    parameter_setup "chipset" "microchip"
+    parameter_setup "series" "mec1501" "mec152x" "mec172x"
+    parameter_setup "soc" "Alder Lake"
+}
+
 function check_and_setup_parameters() {
     zephyr_board="$1"
 
@@ -111,6 +159,10 @@ function setup_microchip_config() {
 
     export "${mec_spi_gen_info["env"]}"="${mec_spi_gen}"
 }
+
+if [ "$#" -eq 0 ]; then
+    parameters_selection
+fi
 
 check_and_setup_parameters
 check_and_setup_west_topdir
