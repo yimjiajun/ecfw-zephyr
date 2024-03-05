@@ -11,7 +11,7 @@ function check_and_setup_parameters() {
     fi
 
     if [ -z "$BOARD" ]; then
-        set_zephyr_board="-b $zephyr_board"
+        set_zephyr_board="--board $zephyr_board"
     else
         set_zephyr_board=" "
         zephyr_board="$BOARD"
