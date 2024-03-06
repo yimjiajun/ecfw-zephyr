@@ -63,22 +63,22 @@ function parameters_selection() {
         case ${info["chipset"]} in
             "microchip")
                 board_info["chipset"]="mec"
+
+                case ${info["series"]} in
+                    "152x")
+                        board_info["series"]="1501"
+                        ;;
+                    "172x")
+                        board_info["series"]="1723"
+                        ;;
+                    *)
+                        board_info["series"]="${info["series"]}"
+                        ;;
+                esac
                 ;;
             *)
                 echo "chipset ${info["chipset"]} is not supporting in ecfw project"
                 exit 1
-                ;;
-        esac
-
-        case ${info["series"]} in
-            "152x")
-                board_info["series"]="1501"
-                ;;
-            "172x")
-                board_info["series"]="1723"
-                ;;
-            *)
-                board_info["series"]="${info["series"]}"
                 ;;
         esac
 
