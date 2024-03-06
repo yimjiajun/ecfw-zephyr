@@ -98,9 +98,11 @@ function parameters_selection() {
 }
 
 function check_and_setup_parameters() {
-    zephyr_board="$1"
+    if [ "$#" -gt 0 ]; then
+        zephyr_board="$1"
+    fi
 
-    if [ -z "$zephyr_board" ]; then
+    if [ -z "${zephyr_board}" ]; then
         zephyr_board="mec1501_adl"
     fi
 
