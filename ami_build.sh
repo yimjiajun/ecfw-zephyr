@@ -168,7 +168,8 @@ function setup_microchip_config() {
             mec_spi_gen_info["generator"]="everglades_spi_gen_RomE"
             mec_spi_gen_info["env"]="EVERGLADES_SPI_GEN"
             # MEC152x compatible with MEC1501 in zephyr board
-            set_zephyr_board="--board mec1501_adl"
+            zephyr_board="$(sed -e 's/mec152\w/mec1501/' <<< ${zephyr_board})"
+            set_zephyr_board="--board ${zephyr_board}"
 
             if [[ $zephyr_board == *"modular_assy"* ]]; then
                 set_zephyr_dconfig="-- -DCONFIG_MEC15XX_AIC_ON_TGL=y"
