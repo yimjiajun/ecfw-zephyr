@@ -147,24 +147,38 @@ function check_and_setup_west_topdir() {
         }
     fi
 
-    if [ ! -d "${zephyr_west_manifest_path}" ]; then
+    zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
+        echo "Error:failed to get west topdir"
+        exit 1
+    }
+
+    if [ ! -d "${zephyr_west_topdir}/${zephyr_west_manifest_path}" ]; then
         west update -n || {
             echo "Error: failed to update west workspace"
             exit 1
         }
     fi
 
-    zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
-        echo "Error:failed to get west topdir"
-        exit 1
-    }
+    if [[ "$(west config --local zephyr.base 2>/dev/null)" != \
+        "${zephyr_west_manifest_path}/zephyr_fork" ]];
+    then
+        if [ -d "${zephyr_west_manifest_path}/zephyr_fork" ]; then
+            west config --local zephyr.base "${zephyr_west_topdir}/zephyr_fork" || {
+                echo "Error: failed to set zephyr base path in west workspace"
+                exit 1
+            }
+        else
+            echo "Error: zephyr_fork directory is not found in ${zephyr_west_manifest_path}"
+            exit 1
+        fi
+    fi
 
-    cd "${zephyr_west_topdir}" || {
-        echo "Error: failed to change directory to west top directory"
-        exit 1
-    }
-
-    echo "changed directorty to ${PWD}"
+    if [[ "$(west config --local zephyr.base-prefer 2>/dev/null)" != "configfile" ]]; then
+        west config --local zephyr.base-prefer "configfile" || {
+            echo "Error: failed to set zephyr base path in west workspace"
+            exit 1
+        }
+    fi
 }
 
 function setup_microchip_config() {
