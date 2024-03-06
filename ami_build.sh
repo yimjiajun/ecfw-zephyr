@@ -259,12 +259,30 @@ function setup_microchip_config() {
     export "${mec_spi_gen_info["env"]}"="${mec_spi_gen}"
 }
 
+function check_supported_board() {
+    zephyr_ecfw_boards="$(ls ${zephyr_build_script_path}/out_of_tree_boards/boards/* 2>/dev/null)"
+    found_supported_board='no'
+
+    for board in ${zephyr_ecfw_boards}; do
+        if [ "$(basename ${board})" == "${zephyr_board}" ]; then
+            found_supported_board='yes'
+            break
+        fi
+    done
+
+    if [ "${found_supported_board}" != 'yes' ]; then
+        echo "Error: ${zephyr_board} is not supported in ecfw project"
+        exit 1
+    fi
+}
+
 if [ "$#" -eq 0 ]; then
     parameters_selection
 fi
 
 check_and_setup_parameters
 check_and_setup_west_workspace
+check_supported_board
 
 if [[ "${zephyr_board}" =~ ^mec[[:digit:]]{2}.* ]]; then
     setup_microchip_config
