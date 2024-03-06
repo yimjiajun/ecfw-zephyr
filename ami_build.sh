@@ -54,6 +54,12 @@ function parameters_selection() {
             "Alder Lake P")
                 board_info["soc"]="adl_p"
                 ;;
+            "Meteor Lake")
+                board_info["soc"]="mtl_s"
+                ;;
+            "Meteor Lake P")
+                board_info["soc"]="mtl_p"
+                ;;
             *)
                 echo "soc ${info["soc"]} is not supporting in ecfw project"
                 exit 1
@@ -81,7 +87,7 @@ function parameters_selection() {
     }
 
 
-    parameter_setup "soc" "Alder Lake" "Alder Lake P"
+    parameter_setup "soc" "Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P"
     parameter_setup "chipset" "microchip"
 
     if [[ ${info["chipset"]} == "microchip" ]]; then
