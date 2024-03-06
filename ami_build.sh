@@ -145,7 +145,9 @@ function check_and_setup_west_topdir() {
             echo "Error: failed to change directory to west top directory"
             exit 1
         }
+    fi
 
+    if [ ! -d "${zephyr_west_manifest_path}" ]; then
         west update -n || {
             echo "Error: failed to update west workspace"
             exit 1
