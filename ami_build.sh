@@ -159,16 +159,16 @@ function check_and_setup_west_workspace() {
         }
     fi
 
-    if [[ "$(west config --local zephyr.base 2>/dev/null)" != \
-        "${zephyr_west_manifest_path}/zephyr_fork" ]];
-    then
-        if [ -d "${zephyr_west_manifest_path}/zephyr_fork" ]; then
-            west config --local zephyr.base "${zephyr_west_topdir}/zephyr_fork" || {
+    zephyr_base_path="${zephyr_west_topdir}/${zephyr_west_manifest_path}/zephyr_fork"
+
+    if [[ "$(west config --local zephyr.base 2>/dev/null)" != "${zephyr_base_path}" ]]; then
+        if [ -d "${zephyr_base_path}" ]; then
+            west config --local zephyr.base "${zephyr_west_manifest_path}/zephyr_fork" || {
                 echo "Error: failed to set zephyr base path in west workspace"
                 exit 1
             }
         else
-            echo "Error: zephyr_fork directory is not found in ${zephyr_west_manifest_path}"
+            echo "Error: zephyr_fork directory is not found in ${zephyr_west_topdir}/${zephyr_west_manifest_path}"
             exit 1
         fi
     fi
