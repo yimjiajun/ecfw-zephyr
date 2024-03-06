@@ -122,13 +122,13 @@ function check_and_setup_parameters() {
 function check_and_setup_west_topdir() {
     zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
         cd ${zephyr_build_script_path} || {
-            echo "failed to change directory to build script path to get west topdir"
+            echo "Error: failed to change directory to build script path to get west topdir"
             exit 1
         }
     }
 
     zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
-        echo "failed to get west topdir"
+        echo "Error:failed to get west topdir"
         exit 1
     }
 
@@ -146,9 +146,9 @@ function setup_microchip_config() {
     mec_cpgzephyrdocs_repo="https://github.com/MicrochipTech/CPGZephyrDocs.git"
 
     if [ ! -d "${zephyr_mec_spi_gen_path}" ]; then
-        echo "CPGZephyrDocs directory not found in ${zephyr_mec_spi_gen_path}"
+        echo "Warn: CPGZephyrDocs directory not found in ${zephyr_mec_spi_gen_path}"
         git clone --depth 1 ${mec_cpgzephyrdocs_repo} "${zephyr_mec_spi_gen_path}" || {
-            echo "failed to clone microchip spi generator into ${zephyr_mec_spi_gen_path}"
+            echo "Error: failed to clone microchip spi generator into ${zephyr_mec_spi_gen_path}"
             exit 1
         }
     fi
@@ -187,7 +187,7 @@ function setup_microchip_config() {
             ;;
 
         *)
-            echo "${zephyr_board} is not supporting in ecfw project"
+            echo "Error: ${zephyr_board} is not supporting in ecfw project"
             exit 1
             ;;
     esac
@@ -195,14 +195,14 @@ function setup_microchip_config() {
     mec_spi_gen_chip_series_dir="${zephyr_mec_spi_gen_path}/${mec_spi_gen_info["series"]}"
 
     if [ ! -d "${mec_spi_gen_chip_series_dir}" ]; then
-        echo "${mec_spi_gen_chip_series_dir} directory not found for ${zephyr_board}"
+        echo "Error: ${mec_spi_gen_chip_series_dir} directory not found for ${zephyr_board}"
         exit 1
     fi
 
     mec_spi_gen="$(find ${mec_spi_gen_chip_series_dir} -name "${mec_spi_gen_info["generator"]}" -type f -print 2>/dev/null)"
 
     if [ -z "${mec_spi_gen_info["generator"]}" ]; then
-        echo "spi generator not found for ${zephyr_board}"
+        echo "Error: spi generator not found for ${zephyr_board}"
         exit 1
     fi
 
