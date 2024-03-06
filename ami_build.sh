@@ -1,7 +1,7 @@
 #!/bin/bash
 
 zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
-zephyr_west_manifest_path="${zephyr_build_script_path}/ecfwwork"
+zephyr_west_manifest_path="ecfwwork"
 
 function parameters_selection() {
     parameters=("soc" "chipset" "series")
@@ -174,7 +174,7 @@ function setup_microchip_config() {
     # - "env": environment variable to set spi generator path. ex. EVERGLADES_SPI_GEN, MEC172X_SPI_GEN
     declare -A mec_spi_gen_info
     set_zephyr_dconfig=" "
-    zephyr_mec_spi_gen_path="${zephyr_west_manifest_path}/CPGZephyrDocs"
+    zephyr_mec_spi_gen_path="${zephyr_west_topdir}/${zephyr_west_manifest_path}/CPGZephyrDocs"
     mec_cpgzephyrdocs_repo="https://github.com/MicrochipTech/CPGZephyrDocs.git"
 
     if [ ! -d "${zephyr_mec_spi_gen_path}" ]; then
