@@ -126,12 +126,43 @@ function check_and_setup_west_topdir() {
         }
     }
 
+    if [[ "$(west config --local manifest.path 2>/dev/null)" != \
+        "$(basename ${zephyr_build_script_path})" ]];
+    then
+        west init -l "${zephyr_build_script_path}" || {
+            echo "Error: failed to initialize west workspace in ${zephyr_build_script_path}"
+            exit 1
+        }
+
+        if [[ "$(west config --local manifest.path 2>/dev/null)" != \
+            "$(basename ${zephyr_build_script_path})" ]];
+        then
+            echo "Error: failed to set manifest path in west workspace by west init"
+            exit 1
+        fi
+
+        cd "$(west topdir 2>/dev/null)" || {
+            echo "Error: failed to change directory to west top directory"
+            exit 1
+        }
+
+        west update -n || {
+            echo "Error: failed to update west workspace"
+            exit 1
+        }
+    fi
+
     zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
         echo "Error:failed to get west topdir"
         exit 1
     }
 
-    echo "changed directorty to west topdir : ${zephyr_west_topdir}"
+    cd "${zephyr_west_topdir}" || {
+        echo "Error: failed to change directory to west top directory"
+        exit 1
+    }
+
+    echo "changed directorty to ${PWD}"
 }
 
 function setup_microchip_config() {
