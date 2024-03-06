@@ -65,9 +65,6 @@ function parameters_selection() {
                 board_info["chipset"]="mec"
 
                 case ${info["series"]} in
-                    "172x")
-                        board_info["series"]="1723"
-                        ;;
                     *)
                         board_info["series"]="${info["series"]}"
                         ;;
