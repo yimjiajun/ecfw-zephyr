@@ -118,7 +118,7 @@ function check_and_setup_parameters() {
     fi
 }
 
-function check_and_setup_west_topdir() {
+function check_and_setup_west_workspace() {
     zephyr_west_topdir="$(west topdir 2>/dev/null)" || {
         cd ${zephyr_build_script_path} || {
             echo "Error: failed to change directory to build script path to get west topdir"
@@ -261,7 +261,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 check_and_setup_parameters
-check_and_setup_west_topdir
+check_and_setup_west_workspace
 
 if [[ "${zephyr_board}" =~ ^mec[[:digit:]]{2}.* ]]; then
     setup_microchip_config
