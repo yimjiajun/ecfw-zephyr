@@ -303,6 +303,16 @@ function setup_microchip_config() {
     fi
 
     export "${mec_spi_gen_info["env"]}"="${mec_spi_gen}"
+
+    if [ -z "$(git -C ${zephyr_base_path} status --porcelain)" ]; then
+        patch_files=($(find ${zephyr_build_script_path}/zephyr_patches \
+            -type f -name "patch*v[[:digit:]]*_[[:digit:]]*.patch" -print | sort))
+
+        git -C ${zephyr_base_path} apply "${patch_files[$((${#patch_files[@]} - 1))]}" || {
+            echo "Error: failed to apply patches on ecfw zephyr base kernel"
+            exit 1
+        }
+    fi
 }
 
 function check_supported_board() {
