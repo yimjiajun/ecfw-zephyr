@@ -328,11 +328,12 @@ fi
 
 check_and_setup_parameters
 check_and_setup_west_workspace
-check_supported_board
 
 if [[ "${zephyr_board}" =~ ^mec[[:digit:]]{2}.* ]]; then
     setup_microchip_config
 fi
+
+check_supported_board
 
 zephyr_app_path="${zephyr_west_topdir}/$(west config --local manifest.path)"
 west build -t menuconfig -p=always -d build $set_zephyr_board \
