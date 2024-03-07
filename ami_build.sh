@@ -52,7 +52,7 @@ function parameters_selection() {
         done
 
         sel=$(whiptail --title "${title}" --radiolist "Please select one of options" 20 60 10 \
-            "${lists[@]}" 3>&1 1>&2 2>&3)
+            "${lists[@]}" --nocancel --ok-button 'done' 3>&1 1>&2 2>&3)
 
         echo "${sel}"
     }
@@ -70,7 +70,7 @@ function parameters_selection() {
                 "soc_series" "${info["soc_vendor"]} series - ${info["soc_series"]}" \
                 "ec_vendor"  "${info["ec_vendor"]}" \
                 "ec_series"  "${info["ec_vendor"]} series - ${info["ec_series"]}" \
-                3>&1 1>&2 2>&3)
+                --ok-button 'select' --cancel-button 'done' 3>&1 1>&2 2>&3)
 
             if [ -z "${menu}" ]; then
                 break
