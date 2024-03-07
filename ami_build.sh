@@ -7,40 +7,96 @@ function parameters_selection() {
     parameters=("soc" "chipset" "series")
     declare -A info
 
-    function parameters_review() {
-        local index=0
-        tput clear
-        echo "Information:"
+    supported_dev_soc=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
+    supported_dev_chipset=("microchip")
+    # chipset series: depending on supported_dev_chipset
+    # - format "supported_dev_<chipset=(<series1> <series2> ...)"
+    supported_dev_microchip=("1501" "152x" "172x")
+    # default values
+    info["soc"]=${supported_dev_soc[0]}
+    info["chipset"]=${supported_dev_chipset[0]}
+    info["series"]=${supported_dev_microchip[0]}
 
-        while [ ${index} -lt "${#parameters[@]}" ]; do
-            local p="${parameters[${index}]}"
-            echo "- ${p}:" "${info[${p}]}"
-            index=$((index + 1))
+    function dev_selection() {
+        local dev="$1"; shift
+        local title=
+        local sel=
+
+        for d in "${parameters[@]}"; do
+            if [[ "${d}" == "${dev}" ]]; then
+                title="${d}"
+                break
+            fi
         done
+
+        if [ -z "${title}" ]; then
+            echo "Error: device not found for ${dev}"
+            exit 1
+        fi
+
+        while [ "$#" -gt 0 ]; do
+            local selected="OFF"
+
+            if [[ "${info["${dev}"]}" == "$1" ]]; then
+                selected="ON"
+            fi
+
+            local lists+=("$1" "" "${selected}")
+            shift
+        done
+
+        sel=$(whiptail --title "${title}" --radiolist "Please select one of options" 20 60 10 \
+            "${lists[@]}" 3>&1 1>&2 2>&3)
+
+        echo "${sel}"
     }
 
-    function parameter_setup() {
-        local name="$1"; shift
-        local selection=("$@")
+    function ecfw_board_selection() {
+        local menu=
+        local sel=
 
-        parameters_review
-        echo -e "\nPlease select ${name}:"
-        select s in "${selection[@]}" 'exit'; do
-            case ${s} in
-                'exit')
-                    exit 0
+        while [ -z ${menu} ]; do
+            menu=$(whiptail \
+                --title "AMI EC" \
+                --menu "Please enter one of options to select" \
+                20 60 10 \
+                "soc"     "Platform series (${info["soc"]})"\
+                "chipset" "EC chipset      (${info["chipset"]})" \
+                "series"  "EC series       (${info["series"]})" \
+                3>&1 1>&2 2>&3)
+
+            if [ -z "${menu}" ]; then
+                break
+            fi
+
+            case ${menu} in
+                "soc")
+                    sel=$(dev_selection "soc" "${supported_dev_soc[@]}")
                     ;;
-
+                "chipset")
+                    sel=$(dev_selection "chipset" "${supported_dev_chipset[@]}")
+                    ;;
+                "series")
+                    selected_dev_chipset="supported_dev_${info["chipset"]}"
+                    eval "dev_series=(\"\${${selected_dev_chipset}[@]}\")"
+                    sel=$(dev_selection "series" "${dev_series[@]}")
+                    ;;
                 *)
-                    for v in "${selection[@]}"; do
-                        if [[ "${v}" == "${s}" ]]; then
-                            info["${name}"]="${s}"
-                            parameters_review
-                            return 0
-                        fi
-                    done
+                    echo "Error: invalid menu selection"
+                    exit 1
                     ;;
             esac
+
+            if [ -n "${sel}" ]; then
+                if [[ "${sel}" =~ [Ee]rror ]]; then
+                    echo "${sel}"
+                    exit 1
+                fi
+
+                info["${menu}"]="${sel}"
+            fi
+
+            menu=
         done
     }
 
@@ -86,17 +142,7 @@ function parameters_selection() {
         echo "zephyr board: ${zephyr_board}"
     }
 
-
-    parameter_setup "soc" "Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P"
-    parameter_setup "chipset" "microchip"
-
-    if [[ ${info["chipset"]} == "microchip" ]]; then
-        parameter_setup "series" "1501" "152x" "172x"
-    else
-        echo "chipset ${info["chipset"]} is not supporting in ecfw project"
-        exit 1
-    fi
-
+    ecfw_board_selection
     board_setup
 }
 
