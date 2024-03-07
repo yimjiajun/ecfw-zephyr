@@ -4,18 +4,24 @@ zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="ecfwwork"
 
 function parameters_selection() {
-    parameters=("soc" "chipset" "series")
+    parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series")
     declare -A info
 
-    supported_dev_soc=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
-    supported_dev_chipset=("microchip")
-    # chipset series: depending on supported_dev_chipset
-    # - format "supported_dev_<chipset=(<series1> <series2> ...)"
-    supported_dev_microchip=("1501" "152x" "172x")
+    # SoC series: depending on supported_soc_vendor
+    # - format "supported_soc_<soc_vendor>=(<series1> <series2> ...)"
+    supported_soc_vendor=("Intel" "AMD")
+    supported_soc_intel=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
+    supported_soc_amd=("Hawk Point")
+    # EC series: depending on supported_ec_series
+    # - format "supported_ec_<ec_vendor>=(<series1> <series2> ...)"
+    supported_ec_vendor=("microchip" "ite")
+    supported_ec_microchip=("1501" "152x" "172x")
+    supported_ec_ite=("82202")
     # default values
-    info["soc"]=${supported_dev_soc[0]}
-    info["chipset"]=${supported_dev_chipset[0]}
-    info["series"]=${supported_dev_microchip[0]}
+    info["soc_vendor"]=${supported_soc_vendor[0]}
+    info["soc_series"]=${supported_soc_intel[0]}
+    info["ec_vendor"]=${supported_ec_vendor[0]}
+    info["ec_series"]=${supported_ec_microchip[0]}
 
     function dev_selection() {
         local dev="$1"; shift
@@ -60,9 +66,10 @@ function parameters_selection() {
                 --title "AMI EC" \
                 --menu "Please enter one of options to select" \
                 20 60 10 \
-                "soc"     "Platform series (${info["soc"]})"\
-                "chipset" "EC chipset      (${info["chipset"]})" \
-                "series"  "EC series       (${info["series"]})" \
+                "soc_vendor" "${info["soc_vendor"]}" \
+                "soc_series" "${info["soc_vendor"]} series - ${info["soc_series"]}" \
+                "ec_vendor"  "${info["ec_vendor"]}" \
+                "ec_series"  "${info["ec_vendor"]} series - ${info["ec_series"]}" \
                 3>&1 1>&2 2>&3)
 
             if [ -z "${menu}" ]; then
@@ -70,16 +77,33 @@ function parameters_selection() {
             fi
 
             case ${menu} in
-                "soc")
-                    sel=$(dev_selection "soc" "${supported_dev_soc[@]}")
+                "soc_vendor")
+                    sel=$(dev_selection "soc_vendor" "${supported_soc_vendor[@]}")
+
+                    if [ "${sel,,}" != "${info["soc_vendor"],,}" ]; then
+                        selected_soc="supported_soc_${sel,,}"
+                        eval "soc_series=(\"\${${selected_soc}[@]}\")"
+                        info["soc_series"]="${soc_series[0]}"
+                    fi
                     ;;
-                "chipset")
-                    sel=$(dev_selection "chipset" "${supported_dev_chipset[@]}")
+                "soc_series")
+                    selected_soc="supported_soc_${info["soc_vendor"],,}"
+                    eval "soc_series=(\"\${${selected_soc}[@]}\")"
+                    sel=$(dev_selection "soc_series" "${soc_series[@]}")
                     ;;
-                "series")
-                    selected_dev_chipset="supported_dev_${info["chipset"]}"
-                    eval "dev_series=(\"\${${selected_dev_chipset}[@]}\")"
-                    sel=$(dev_selection "series" "${dev_series[@]}")
+                "ec_vendor")
+                    sel=$(dev_selection "ec_vendor" "${supported_ec_vendor[@]}")
+
+                    if [ "${sel,,}" != "${info["ec_vendor"],,}" ]; then
+                        selected_ec="supported_ec_${sel,,}"
+                        eval "ec_series=(\"\${${selected_ec}[@]}\")"
+                        info["ec_series"]="${ec_series[0]}"
+                    fi
+                    ;;
+                "ec_series")
+                    selected_ec="supported_ec_${info["ec_vendor"],,}"
+                    eval "ec_series=(\"\${${selected_ec}[@]}\")"
+                    sel=$(dev_selection "ec_series" "${ec_series[@]}")
                     ;;
                 *)
                     echo "Error: invalid menu selection"
@@ -103,42 +127,57 @@ function parameters_selection() {
     function board_setup() {
         declare -A board_info
 
-        case ${info["soc"]} in
-            "Alder Lake")
-                board_info["soc"]="adl"
-                ;;
-            "Alder Lake P")
-                board_info["soc"]="adl_p"
-                ;;
-            "Meteor Lake")
-                board_info["soc"]="mtl_s"
-                ;;
-            "Meteor Lake P")
-                board_info["soc"]="mtl_p"
-                ;;
-            *)
-                echo "soc ${info["soc"]} is not supporting in ecfw project"
-                exit 1
-                ;;
-        esac
+        if [ "${info["soc_vendor"]}" == "Intel" ]; then
+            case ${info["soc_series"]} in
+                "Alder Lake")
+                    board_info["soc_series"]="adl"
+                    ;;
+                "Alder Lake P")
+                    board_info["soc_series"]="adl_p"
+                    ;;
+                "Meteor Lake")
+                    board_info["soc_series"]="mtl_s"
+                    ;;
+                "Meteor Lake P")
+                    board_info["soc_series"]="mtl_p"
+                    ;;
+                *)
+                    echo "${info["soc_vendor"]} ${info["soc_series"]} is not supporting in ecfw project"
+                    exit 1
+                    ;;
+            esac
+        elif [ "${info["soc_vendor"]}" == "AMD" ]; then
+            case ${info["soc_series"]} in
+                "Hawk Point")
+                    board_info["soc_series"]="hkp"
+                    ;;
+                *)
+                    echo "${info["soc_vendor"]} ${info["soc_series"]} is not supporting in ecfw project"
+                    exit 1
+                    ;;
+            esac
+        else
+            echo "soc vendor ${info["soc_vendor"]} is not supporting in ecfw project"
+            exit 1
+        fi
 
-        case ${info["chipset"]} in
+        case ${info["ec_vendor"]} in
             "microchip")
-                board_info["chipset"]="mec"
+                board_info["ec_vendor"]="mec"
 
-                case ${info["series"]} in
+                case ${info["ec_series"]} in
                     *)
-                        board_info["series"]="${info["series"]}"
+                        board_info["ec_series"]="${info["ec_series"]}"
                         ;;
                 esac
                 ;;
             *)
-                echo "chipset ${info["chipset"]} is not supporting in ecfw project"
+                echo "${info["ec_vendor"]} ${info["ec_series"]} is not supporting in ecfw project"
                 exit 1
                 ;;
         esac
 
-        zephyr_board="${board_info["chipset"]}${board_info["series"]}_${board_info["soc"]}"
+        zephyr_board="${board_info["ec_vendor"]}${board_info["ec_series"]}_${board_info["soc_series"]}"
         echo "zephyr board: ${zephyr_board}"
     }
 
