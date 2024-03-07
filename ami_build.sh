@@ -80,7 +80,9 @@ function parameters_selection() {
                 "soc_vendor")
                     sel=$(dev_selection "soc_vendor" "${supported_soc_vendor[@]}")
 
-                    if [ "${sel,,}" != "${info["soc_vendor"],,}" ]; then
+                    if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
+                        [ "${sel,,}" != "${info["soc_vendor"],,}" ];
+                    then
                         selected_soc="supported_soc_${sel,,}"
                         eval "soc_series=(\"\${${selected_soc}[@]}\")"
                         info["soc_series"]="${soc_series[0]}"
@@ -94,7 +96,9 @@ function parameters_selection() {
                 "ec_vendor")
                     sel=$(dev_selection "ec_vendor" "${supported_ec_vendor[@]}")
 
-                    if [ "${sel,,}" != "${info["ec_vendor"],,}" ]; then
+                    if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
+                        [ "${sel,,}" != "${info["ec_vendor"],,}" ];
+                    then
                         selected_ec="supported_ec_${sel,,}"
                         eval "ec_series=(\"\${${selected_ec}[@]}\")"
                         info["ec_series"]="${ec_series[0]}"
