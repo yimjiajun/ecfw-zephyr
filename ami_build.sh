@@ -3,6 +3,50 @@
 zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="ecfwwork"
 
+function get_center_window_position_row_col() {
+    local ret=0
+
+    if [ -n "$(command -v tput)" ]; then
+        local rows=$(tput lines)
+        local cols=$(tput cols)
+    elif [ -n "$(command -v stty)" ]; then
+        local rows=$(stty size | cut -d' ' -f1)
+        local cols=$(stty size | cut -d' ' -f2)
+    else
+        local rows=24
+        local cols=80
+    fi
+
+    local center_row=$((rows / 2))
+    local center_col=$((cols / 2))
+
+    if [ "$#" -eq 0 ]; then
+        echo "${center_row} ${center_col}"
+    else
+        local args=()
+
+        while [ "$#" -gt 0 ]; do
+            case "$1" in
+                "height"|"row")
+                    args+=("${center_row}")
+                    ;;
+                "width"|"col")
+                    args+=("${center_col}")
+                    ;;
+                *)
+                    args+=("0")
+                    ret=1
+                    ;;
+            esac
+            shift
+        done
+
+        echo "${args[@]}"
+    fi
+
+    return ${ret}
+}
+
 function parameters_selection() {
     parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series")
     declare -A info
@@ -51,8 +95,11 @@ function parameters_selection() {
             shift
         done
 
-        sel=$(whiptail --title "${title}" --radiolist "Please select one of options" 20 60 10 \
-            "${lists[@]}" --nocancel --ok-button 'done' 3>&1 1>&2 2>&3)
+        sel=$(whiptail --title "${title}" --radiolist "Please select one of options" \
+            $(get_center_window_position_row_col) \
+            $(($(get_center_window_position_row_col "height") / 3)) \
+            "${lists[@]}" --nocancel --ok-button 'done' --clear \
+            3>&1 1>&2 2>&3)
 
         if [ "$?" -ne 0 ]; then
             echo ""
@@ -69,12 +116,14 @@ function parameters_selection() {
             menu=$(whiptail \
                 --title "AMI EC" \
                 --menu "Please enter one of options to select" \
-                20 60 10 \
+                $(get_center_window_position_row_col) \
+                $(($(get_center_window_position_row_col "height") / 3)) \
                 "soc_vendor" "${info["soc_vendor"]}" \
                 "soc_series" "${info["soc_vendor"]} series - ${info["soc_series"]}" \
                 "ec_vendor"  "${info["ec_vendor"]}" \
                 "ec_series"  "${info["ec_vendor"]} series - ${info["ec_series"]}" \
-                --ok-button 'select' --cancel-button 'done' 3>&1 1>&2 2>&3)
+                --ok-button 'select' --cancel-button 'done' --clear \
+                3>&1 1>&2 2>&3)
 
             if [ -z "${menu}" ]; then
                 break
