@@ -237,11 +237,11 @@ function parameters_selection() {
                 --menu "Please enter one of options to select" \
                 $(get_center_window_position_row_col) \
                 $(($(get_center_window_position_row_col "height") / 3)) \
-                "SoC Vendor" "${info["soc_vendor"]}" \
-                "SoC Series" "${info["soc_series"]}" \
-                "Ec Vendor"  "${info["ec_vendor"]}" \
-                "Ec Series"  "${info["ec_series"]}" \
-                "colorscheme"  "${info["colorscheme"]}" \
+                "SoC Vendor"   "    ${info["soc_vendor"]}" \
+                "SoC Series"   "    ${info["soc_series"]}" \
+                "Ec Vendor"    "    ${info["ec_vendor"]}" \
+                "Ec Series"    "    ${info["ec_series"]}" \
+                "colorscheme"  "    ${info["colorscheme"]}" \
                 --ok-button 'select' --cancel-button 'done' --clear \
                 3>&1 1>&2 2>&3)
 
