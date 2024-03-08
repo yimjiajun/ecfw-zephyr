@@ -66,6 +66,7 @@ function parameters_selection() {
     info["soc_series"]=${supported_soc_intel[0]}
     info["ec_vendor"]=${supported_ec_vendor[0]}
     info["ec_series"]=${supported_ec_microchip[0]}
+    info["colorscheme"]="default"
 
     function dev_selection() {
         local dev="$1"; shift
@@ -108,6 +109,124 @@ function parameters_selection() {
         echo "${sel}"
     }
 
+    function whiptail_colorscheme_select() {
+        local newt_colors=('skyblue' 'darkblue' 'gruvbox' 'habamax')
+        local skyblue='
+            root=white,blue
+            border=white,blue
+            title=white,blue
+            roottext=gray,blue
+            window=white,blue
+            textbox=gray,blue
+            button=blue,white
+            compactbutton=gray,blue
+            listbox=gray,blue
+            actlistbox=blue,gray
+            actsellistbox=blue,white
+            checkbox=white,blue
+            actcheckbox=blue,white'
+        local darkblue='
+            root=,blue
+            checkbox=,blue
+            entry=,blue
+            label=blue,
+            actlistbox=,blue
+            helpline=,blue
+            roottext=,blue
+            emptyscale=blue
+            disabledentry=blue,'
+        local gruvbox='
+            root=green,black
+            border=green,black
+            title=green,black
+            roottext=white,black
+            window=green,black
+            textbox=white,black
+            button=black,green
+            compactbutton=white,black
+            listbox=white,black
+            actlistbox=black,white
+            actsellistbox=black,green
+            checkbox=green,black
+            actcheckbox=black,green'
+        local habamax='
+            root=white,black
+            border=black,lightgray
+            window=lightgray,lightgray
+            shadow=black,gray
+            title=black,lightgray
+            button=black,cyan
+            actbutton=white,cyan
+            compactbutton=black,lightgray
+            checkbox=black,lightgray
+            actcheckbox=lightgray,cyan
+            entry=black,lightgray
+            disentry=gray,lightgray
+            label=black,lightgray
+            listbox=black,lightgray
+            actlistbox=black,cyan
+            sellistbox=lightgray,black
+            actsellistbox=lightgray,black
+            textbox=black,lightgray
+            acttextbox=black,cyan
+            emptyscale=,gray
+            fullscale=,cyan
+            helpline=white,black
+            roottext=lightgrey,black'
+        local sel=
+        local tmp_colorscheme_file="/tmp/ami_ecfw_color_palette"
+
+        if [ "$#" -ge 2 ]; then
+            echo "Warn: only one color scheme can be selected at a time"
+            return 1
+        elif [ "$#" -eq 1 ]; then
+            for c in "${newt_colors[@]}"; do
+                if [[ "${c}" == "$1" ]]; then
+                    sel="${c}"
+                    break
+                fi
+            done
+
+            if [ -n "${sel}" ]; then
+                export NEWT_COLORS=$(eval "echo \${${sel}}")
+            elif [ -z "${NEWT_COLORS}" ]; then
+                if [ -f "${tmp_colorscheme_file}" ]; then
+                    export NEWT_COLORS=$(cat "${tmp_colorscheme_file}")
+                else
+                    echo "Warn: invalid color scheme $1"
+                    return 1
+                fi
+            fi
+        else
+            for c in "${newt_colors[@]}"; do
+                local selected="OFF"
+
+                if [[ "$(eval "echo \${${c}}")" == "${NEWT_COLORS}" ]]; then
+                    selected="ON"
+                fi
+
+                local lists+=("${c}" "" "${selected}")
+            done
+
+            sel=$(whiptail --title "Whiptail Color Scheme" --radiolist "Please select one of color scheme" \
+                $(get_center_window_position_row_col) \
+                $(($(get_center_window_position_row_col "height") / 3)) \
+                "${lists[@]}" --nocancel --ok-button 'done' --clear\
+                3>&1 1>&2 2>&3)
+
+            if [ "$?" -eq 0 ] && [ -n "${sel}" ]; then
+                export NEWT_COLORS=$(eval "echo \${${sel}}")
+                echo "${NEWT_COLORS}" > "${tmp_colorscheme_file}"
+            fi
+        fi
+
+        if [ -n "${sel}" ]; then
+            info["colorscheme"]="${sel}"
+        fi
+
+        return 0
+    }
+
     function ecfw_board_selection() {
         local menu=
         local sel=
@@ -122,6 +241,7 @@ function parameters_selection() {
                 "soc_series" "${info["soc_vendor"]} series - ${info["soc_series"]}" \
                 "ec_vendor"  "${info["ec_vendor"]}" \
                 "ec_series"  "${info["ec_vendor"]} series - ${info["ec_series"]}" \
+                "colorscheme"  "${info["colorscheme"]}" \
                 --ok-button 'select' --cancel-button 'done' --clear \
                 3>&1 1>&2 2>&3)
 
@@ -161,6 +281,9 @@ function parameters_selection() {
                     selected_ec="supported_ec_${info["ec_vendor"],,}"
                     eval "ec_series=(\"\${${selected_ec}[@]}\")"
                     sel=$(dev_selection "ec_series" "${ec_series[@]}")
+                    ;;
+                "colorscheme")
+                    whiptail_colorscheme_select
                     ;;
                 *)
                     echo "Error: invalid menu selection"
@@ -238,6 +361,7 @@ function parameters_selection() {
         echo "zephyr board: ${zephyr_board}"
     }
 
+    whiptail_colorscheme_select ${info["colorscheme"]}
     ecfw_board_selection
     board_setup
 }
