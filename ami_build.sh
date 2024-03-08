@@ -237,10 +237,10 @@ function parameters_selection() {
                 --menu "Please enter one of options to select" \
                 $(get_center_window_position_row_col) \
                 $(($(get_center_window_position_row_col "height") / 3)) \
-                "soc_vendor" "${info["soc_vendor"]}" \
-                "soc_series" "${info["soc_vendor"]} series - ${info["soc_series"]}" \
-                "ec_vendor"  "${info["ec_vendor"]}" \
-                "ec_series"  "${info["ec_vendor"]} series - ${info["ec_series"]}" \
+                "SoC Vendor" "${info["soc_vendor"]}" \
+                "SoC Series" "${info["soc_series"]}" \
+                "Ec Vendor"  "${info["ec_vendor"]}" \
+                "Ec Series"  "${info["ec_series"]}" \
                 "colorscheme"  "${info["colorscheme"]}" \
                 --ok-button 'select' --cancel-button 'done' --clear \
                 3>&1 1>&2 2>&3)
@@ -250,7 +250,8 @@ function parameters_selection() {
             fi
 
             case ${menu} in
-                "soc_vendor")
+                "SoC Vendor")
+                    menu="soc_vendor"
                     sel=$(dev_selection "soc_vendor" "${supported_soc_vendor[@]}")
 
                     if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
@@ -261,13 +262,15 @@ function parameters_selection() {
                         info["soc_series"]="${soc_series[0]}"
                     fi
                     ;;
-                "soc_series")
+                "SoC Series")
+                    menu="soc_series"
                     selected_soc="supported_soc_${info["soc_vendor"],,}"
                     eval "soc_series=(\"\${${selected_soc}[@]}\")"
                     sel=$(dev_selection "soc_series" "${soc_series[@]}")
                     ;;
-                "ec_vendor")
+                "Ec Vendor")
                     sel=$(dev_selection "ec_vendor" "${supported_ec_vendor[@]}")
+                    menu="ec_vendor"
 
                     if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
                         [ "${sel,,}" != "${info["ec_vendor"],,}" ];
@@ -277,7 +280,8 @@ function parameters_selection() {
                         info["ec_series"]="${ec_series[0]}"
                     fi
                     ;;
-                "ec_series")
+                "Ec Series")
+                    menu="ec_series"
                     selected_ec="supported_ec_${info["ec_vendor"],,}"
                     eval "ec_series=(\"\${${selected_ec}[@]}\")"
                     sel=$(dev_selection "ec_series" "${ec_series[@]}")
