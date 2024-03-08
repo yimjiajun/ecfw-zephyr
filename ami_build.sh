@@ -54,6 +54,10 @@ function parameters_selection() {
         sel=$(whiptail --title "${title}" --radiolist "Please select one of options" 20 60 10 \
             "${lists[@]}" --nocancel --ok-button 'done' 3>&1 1>&2 2>&3)
 
+        if [ "$?" -ne 0 ]; then
+            echo ""
+        fi
+
         echo "${sel}"
     }
 
