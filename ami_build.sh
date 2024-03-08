@@ -284,6 +284,7 @@ function parameters_selection() {
                     ;;
                 "colorscheme")
                     whiptail_colorscheme_select
+                    sel="${info["colorscheme"]}"
                     ;;
                 *)
                     echo "Error: invalid menu selection"
