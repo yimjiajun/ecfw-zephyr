@@ -271,16 +271,16 @@ function parameters_selection() {
 
         if [ "${info["soc_vendor"]}" == "Intel" ]; then
             case ${info["soc_series"]} in
-                "Alder Lake")
+                "AlderLake")
                     board_info["soc_series"]="adl"
                     ;;
-                "Alder Lake P")
+                "AlderLake-P")
                     board_info["soc_series"]="adl_p"
                     ;;
-                "Meteor Lake")
+                "MeteorLake")
                     board_info["soc_series"]="mtl_s"
                     ;;
-                "Meteor Lake P")
+                "MeteorLake-P")
                     board_info["soc_series"]="mtl_p"
                     ;;
                 *)
@@ -303,23 +303,13 @@ function parameters_selection() {
             exit 1
         fi
 
-        case ${info["ec_vendor"]} in
-            "microchip")
-                board_info["ec_vendor"]="mec"
-
-                case ${info["ec_series"]} in
-                    *)
-                        board_info["ec_series"]="${info["ec_series"]}"
-                        ;;
-                esac
-                ;;
+        case ${info["ec_series"]} in
             *)
-                echo "${info["ec_vendor"]} ${info["ec_series"]} is not supporting in ecfw project"
-                exit 1
+                board_info["ec_series"]="${info["ec_series"],,}"
                 ;;
         esac
 
-        zephyr_board="${board_info["ec_vendor"]}${board_info["ec_series"]}_${board_info["soc_series"]}"
+        zephyr_board="${board_info["ec_series"]}_${board_info["soc_series"]}"
         echo "zephyr board: ${zephyr_board}"
     }
 
@@ -328,13 +318,13 @@ function parameters_selection() {
     # SoC series: depending on supported_soc_vendor
     # - format "supported_soc_<soc_vendor>=(<series1> <series2> ...)"
     supported_soc_vendor=("Intel" "AMD")
-    supported_soc_intel=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
-    supported_soc_amd=("Hawk Point")
+    supported_soc_intel=("AlderLake" "AlderLake-P" "MeteorLake" "MeteorLake-P")
+    supported_soc_amd=("HawkPoint")
     # EC series: depending on supported_ec_series
     # - format "supported_ec_<ec_vendor>=(<series1> <series2> ...)"
-    supported_ec_vendor=("microchip" "ite")
-    supported_ec_microchip=("1501" "152x" "172x")
-    supported_ec_ite=("82202")
+    supported_ec_vendor=("Microchip" "ITE")
+    supported_ec_microchip=("MEC1501" "MEC152x" "MEC172x")
+    supported_ec_ite=("IT82202")
     # default values
     info["soc_vendor"]=${supported_soc_vendor[0]}
     info["soc_series"]=${supported_soc_intel[0]}
