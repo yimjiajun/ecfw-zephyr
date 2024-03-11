@@ -290,7 +290,7 @@ function parameters_selection() {
             esac
         elif [ "${info["soc_vendor"]}" == "AMD" ]; then
             case ${info["soc_series"]} in
-                "Hawk Point")
+                "HawkPoint")
                     board_info["soc_series"]="hkp"
                     ;;
                 *)
