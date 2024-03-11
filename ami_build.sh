@@ -128,12 +128,8 @@ function parameters_selection() {
             if [ -n "${sel}" ]; then
                 export NEWT_COLORS=$(eval "echo \${${sel}}")
             elif [ -z "${NEWT_COLORS}" ]; then
-                if [ -f "${color_scheme_file}" ]; then
-                    export NEWT_COLORS=$(cat "${color_scheme_file}")
-                else
-                    echo "Warn: invalid color scheme $1"
-                    return 1
-                fi
+                echo "Warn: invalid color scheme $1"
+                return 1
             fi
         else
             for c in "${newt_colors[@]}"; do
@@ -148,19 +144,18 @@ function parameters_selection() {
 
             sel=$(whiptail --title "Whiptail Color Scheme" --radiolist "Please select one of color scheme" \
                 0 0 0\
-                "${lists[@]}" --nocancel --ok-button 'done' --clear\
+                "${lists[@]}" --nocancel --ok-button 'Save' --cancel-button 'Cancel' --clear\
                 3>&1 1>&2 2>&3)
 
             if [ "$?" -eq 0 ] && [ -n "${sel}" ]; then
                 export NEWT_COLORS=$(eval "echo \${${sel}}")
-                echo "${NEWT_COLORS}" > "${color_scheme_file}"
+            else
+                echo "Warn: color scheme not selected"
+                return 1
             fi
         fi
 
-        if [ -n "${sel}" ]; then
-            info["colorscheme"]="${sel}"
-        fi
-
+        echo "${sel}"
         return 0
     }
 
@@ -168,7 +163,6 @@ function parameters_selection() {
         local menu=
         local sel=
         declare -A buttons
-        declare -A tmp_info
 
         buttons["status"]=
         buttons["OK"]=0
@@ -247,8 +241,11 @@ function parameters_selection() {
                     sel=$(dev_selection "ec_series" "${ec_series[@]}")
                     ;;
                 "colorscheme")
-                    whiptail_colorscheme_select
-                    sel="${tmp_info["colorscheme"]}"
+                    sel=$(whiptail_colorscheme_select)
+
+                    if [ "$?" -ne 0 ]; then
+                        sel=
+                    fi
                     ;;
                 *)
                     echo "Error: invalid menu selection"
@@ -326,8 +323,8 @@ function parameters_selection() {
         echo "zephyr board: ${zephyr_board}"
     }
 
-    parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series")
-    declare -A info
+    parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series" "colorscheme")
+    declare -A info tmp_info
     # SoC series: depending on supported_soc_vendor
     # - format "supported_soc_<soc_vendor>=(<series1> <series2> ...)"
     supported_soc_vendor=("Intel" "AMD")
@@ -343,13 +340,13 @@ function parameters_selection() {
     info["soc_series"]=${supported_soc_intel[0]}
     info["ec_vendor"]=${supported_ec_vendor[0]}
     info["ec_series"]=${supported_ec_microchip[0]}
-    info["colorscheme"]="default"
+    info["colorscheme"]="gruvbox"
 
     if [ -f "${ami_files["info"]}" ]; then
         source "${ami_files["info"]}"
     fi
 
-    whiptail_colorscheme_select ${info["colorscheme"]}
+    whiptail_colorscheme_select "${info["colorscheme"]}" >/dev/null
     ecfw_board_selection
     board_setup
 }
