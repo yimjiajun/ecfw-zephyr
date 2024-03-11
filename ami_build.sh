@@ -48,26 +48,6 @@ function get_center_window_position_row_col() {
 }
 
 function parameters_selection() {
-    parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series")
-    declare -A info
-
-    # SoC series: depending on supported_soc_vendor
-    # - format "supported_soc_<soc_vendor>=(<series1> <series2> ...)"
-    supported_soc_vendor=("Intel" "AMD")
-    supported_soc_intel=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
-    supported_soc_amd=("Hawk Point")
-    # EC series: depending on supported_ec_series
-    # - format "supported_ec_<ec_vendor>=(<series1> <series2> ...)"
-    supported_ec_vendor=("microchip" "ite")
-    supported_ec_microchip=("1501" "152x" "172x")
-    supported_ec_ite=("82202")
-    # default values
-    info["soc_vendor"]=${supported_soc_vendor[0]}
-    info["soc_series"]=${supported_soc_intel[0]}
-    info["ec_vendor"]=${supported_ec_vendor[0]}
-    info["ec_series"]=${supported_ec_microchip[0]}
-    info["colorscheme"]="default"
-
     function dev_selection() {
         local dev="$1"; shift
         local title=
@@ -365,6 +345,25 @@ function parameters_selection() {
         zephyr_board="${board_info["ec_vendor"]}${board_info["ec_series"]}_${board_info["soc_series"]}"
         echo "zephyr board: ${zephyr_board}"
     }
+
+    parameters=("soc_vendor" "soc_series" "ec_vendor" "ec_series")
+    declare -A info
+    # SoC series: depending on supported_soc_vendor
+    # - format "supported_soc_<soc_vendor>=(<series1> <series2> ...)"
+    supported_soc_vendor=("Intel" "AMD")
+    supported_soc_intel=("Alder Lake" "Alder Lake P" "Meteor Lake" "Meteor Lake P")
+    supported_soc_amd=("Hawk Point")
+    # EC series: depending on supported_ec_series
+    # - format "supported_ec_<ec_vendor>=(<series1> <series2> ...)"
+    supported_ec_vendor=("microchip" "ite")
+    supported_ec_microchip=("1501" "152x" "172x")
+    supported_ec_ite=("82202")
+    # default values
+    info["soc_vendor"]=${supported_soc_vendor[0]}
+    info["soc_series"]=${supported_soc_intel[0]}
+    info["ec_vendor"]=${supported_ec_vendor[0]}
+    info["ec_series"]=${supported_ec_microchip[0]}
+    info["colorscheme"]="default"
 
     whiptail_colorscheme_select ${info["colorscheme"]}
     ecfw_board_selection
