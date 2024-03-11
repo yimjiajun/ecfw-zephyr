@@ -4,7 +4,6 @@ zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="ecfwwork"
 declare -A ami_files
 ami_files["info"]="${HOME}/.ami_ecfw"
-ami_files["color_scheme"]="${HOME}/.ami_ecfw_color_palette"
 
 function parameters_selection() {
     function dev_selection() {
@@ -112,7 +111,6 @@ function parameters_selection() {
             helpline=white,black
             roottext=lightgrey,black'
         local sel=
-        local color_scheme_file="${ami_files["color_scheme"]}"
 
         if [ "$#" -ge 2 ]; then
             echo "Warn: only one color scheme can be selected at a time"
