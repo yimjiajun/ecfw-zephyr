@@ -572,5 +572,5 @@ check_supported_board
 
 zephyr_app_path="${zephyr_west_topdir}/$(west config --local manifest.path)"
 west build -t menuconfig -p=always -d build $set_zephyr_board \
-    $set_zephyr_dconfig "${zephyr_app_path}" && \
-    west build
+    $set_zephyr_dconfig "${zephyr_app_path}" -n && \
+    west build -d build $set_zephyr_board $set_zephyr_dconfig "${zephyr_app_path}" -n
