@@ -2,6 +2,9 @@
 
 zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="ecfwwork"
+declare -A ami_files
+ami_files["info"]="${HOME}/.ami_ecfw"
+ami_files["color_scheme"]="${HOME}/.ami_ecfw_color_palette"
 
 function parameters_selection() {
     function dev_selection() {
@@ -24,7 +27,7 @@ function parameters_selection() {
         while [ "$#" -gt 0 ]; do
             local selected="OFF"
 
-            if [[ "${info["${dev}"]}" == "$1" ]]; then
+            if [[ "${tmp_info["${dev}"]}" == "$1" ]]; then
                 selected="ON"
             fi
 
@@ -34,7 +37,7 @@ function parameters_selection() {
 
         sel=$(whiptail --title "${title}" --radiolist "Please select one of options" \
             0 0 0\
-            "${lists[@]}" --nocancel --ok-button 'done' --clear \
+            "${lists[@]}" --ok-button 'Save' --clear \
             3>&1 1>&2 2>&3)
 
         if [ "$?" -ne 0 ]; then
@@ -109,7 +112,7 @@ function parameters_selection() {
             helpline=white,black
             roottext=lightgrey,black'
         local sel=
-        local tmp_colorscheme_file="/tmp/ami_ecfw_color_palette"
+        local color_scheme_file="${ami_files["color_scheme"]}"
 
         if [ "$#" -ge 2 ]; then
             echo "Warn: only one color scheme can be selected at a time"
@@ -125,8 +128,8 @@ function parameters_selection() {
             if [ -n "${sel}" ]; then
                 export NEWT_COLORS=$(eval "echo \${${sel}}")
             elif [ -z "${NEWT_COLORS}" ]; then
-                if [ -f "${tmp_colorscheme_file}" ]; then
-                    export NEWT_COLORS=$(cat "${tmp_colorscheme_file}")
+                if [ -f "${color_scheme_file}" ]; then
+                    export NEWT_COLORS=$(cat "${color_scheme_file}")
                 else
                     echo "Warn: invalid color scheme $1"
                     return 1
@@ -150,7 +153,7 @@ function parameters_selection() {
 
             if [ "$?" -eq 0 ] && [ -n "${sel}" ]; then
                 export NEWT_COLORS=$(eval "echo \${${sel}}")
-                echo "${NEWT_COLORS}" > "${tmp_colorscheme_file}"
+                echo "${NEWT_COLORS}" > "${color_scheme_file}"
             fi
         fi
 
@@ -164,21 +167,45 @@ function parameters_selection() {
     function ecfw_board_selection() {
         local menu=
         local sel=
+        declare -A buttons
+        declare -A tmp_info
+
+        buttons["status"]=
+        buttons["OK"]=0
+        buttons["SAVE"]=1
+
+        for p in "${parameters[@]}"; do
+            tmp_info["${p}"]="${info[${p}]}"
+        done
 
         while [ -z ${menu} ]; do
             menu=$(whiptail \
                 --title "AMI EC" \
                 --menu "Please enter one of options to select" \
                 0 0 0\
-                "SoC Vendor"   "    ${info["soc_vendor"]}" \
-                "SoC Series"   "    ${info["soc_series"]}" \
-                "Ec Vendor"    "    ${info["ec_vendor"]}" \
-                "Ec Series"    "    ${info["ec_series"]}" \
-                "colorscheme"  "    ${info["colorscheme"]}" \
-                --ok-button 'select' --cancel-button 'done' --clear \
+                "SoC Vendor"   "    ${tmp_info["soc_vendor"]}" \
+                "SoC Series"   "    ${tmp_info["soc_series"]}" \
+                "Ec Vendor"    "    ${tmp_info["ec_vendor"]}" \
+                "Ec Series"    "    ${tmp_info["ec_series"]}" \
+                "colorscheme"  "    ${tmp_info["colorscheme"]}" \
+                --ok-button 'Select' --cancel-button 'Save and Run' --clear \
                 3>&1 1>&2 2>&3)
+            buttons["status"]=$?
 
             if [ -z "${menu}" ]; then
+                if [ "${buttons["status"]}" -eq "${buttons["SAVE"]}" ]; then
+                    if [ ! -f "${ami_files["info"]}" ]; then
+                        touch "${ami_files["info"]}"
+                    fi
+
+                    echo "# AMI EC - info" > "${ami_files["info"]}"
+
+                    for p in "${parameters[@]}"; do
+                        info["${p}"]="${tmp_info[${p}]}"
+                        echo "info[\"${p}\"]=\"${info[${p}]}\"" >> "${ami_files["info"]}"
+                    done
+                fi
+
                 break
             fi
 
@@ -188,16 +215,16 @@ function parameters_selection() {
                     sel=$(dev_selection "soc_vendor" "${supported_soc_vendor[@]}")
 
                     if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
-                        [ "${sel,,}" != "${info["soc_vendor"],,}" ];
+                        [ "${sel,,}" != "${tmp_info["soc_vendor"],,}" ];
                     then
                         selected_soc="supported_soc_${sel,,}"
                         eval "soc_series=(\"\${${selected_soc}[@]}\")"
-                        info["soc_series"]="${soc_series[0]}"
+                        tmp_info["soc_series"]="${soc_series[0]}"
                     fi
                     ;;
                 "SoC Series")
                     menu="soc_series"
-                    selected_soc="supported_soc_${info["soc_vendor"],,}"
+                    selected_soc="supported_soc_${tmp_info["soc_vendor"],,}"
                     eval "soc_series=(\"\${${selected_soc}[@]}\")"
                     sel=$(dev_selection "soc_series" "${soc_series[@]}")
                     ;;
@@ -206,22 +233,22 @@ function parameters_selection() {
                     menu="ec_vendor"
 
                     if [ -n "${sel}" ] && [[ ! "${sel}" =~ [Ee]rror ]] && \
-                        [ "${sel,,}" != "${info["ec_vendor"],,}" ];
+                        [ "${sel,,}" != "${tmp_info["ec_vendor"],,}" ];
                     then
                         selected_ec="supported_ec_${sel,,}"
                         eval "ec_series=(\"\${${selected_ec}[@]}\")"
-                        info["ec_series"]="${ec_series[0]}"
+                        tmp_info["ec_series"]="${ec_series[0]}"
                     fi
                     ;;
                 "Ec Series")
                     menu="ec_series"
-                    selected_ec="supported_ec_${info["ec_vendor"],,}"
+                    selected_ec="supported_ec_${tmp_info["ec_vendor"],,}"
                     eval "ec_series=(\"\${${selected_ec}[@]}\")"
                     sel=$(dev_selection "ec_series" "${ec_series[@]}")
                     ;;
                 "colorscheme")
                     whiptail_colorscheme_select
-                    sel="${info["colorscheme"]}"
+                    sel="${tmp_info["colorscheme"]}"
                     ;;
                 *)
                     echo "Error: invalid menu selection"
@@ -235,7 +262,7 @@ function parameters_selection() {
                     exit 1
                 fi
 
-                info["${menu}"]="${sel}"
+                tmp_info["${menu}"]="${sel}"
             fi
 
             menu=
@@ -317,6 +344,10 @@ function parameters_selection() {
     info["ec_vendor"]=${supported_ec_vendor[0]}
     info["ec_series"]=${supported_ec_microchip[0]}
     info["colorscheme"]="default"
+
+    if [ -f "${ami_files["info"]}" ]; then
+        source "${ami_files["info"]}"
+    fi
 
     whiptail_colorscheme_select ${info["colorscheme"]}
     ecfw_board_selection
