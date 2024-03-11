@@ -3,50 +3,6 @@
 zephyr_build_script_path="$(dirname $(readlink -f "$0"))"
 zephyr_west_manifest_path="ecfwwork"
 
-function get_center_window_position_row_col() {
-    local ret=0
-
-    if [ -n "$(command -v tput)" ]; then
-        local rows=$(tput lines)
-        local cols=$(tput cols)
-    elif [ -n "$(command -v stty)" ]; then
-        local rows=$(stty size | cut -d' ' -f1)
-        local cols=$(stty size | cut -d' ' -f2)
-    else
-        local rows=24
-        local cols=80
-    fi
-
-    local center_row=$((rows / 2))
-    local center_col=$((cols / 2))
-
-    if [ "$#" -eq 0 ]; then
-        echo "${center_row} ${center_col}"
-    else
-        local args=()
-
-        while [ "$#" -gt 0 ]; do
-            case "$1" in
-                "height"|"row")
-                    args+=("${center_row}")
-                    ;;
-                "width"|"col")
-                    args+=("${center_col}")
-                    ;;
-                *)
-                    args+=("0")
-                    ret=1
-                    ;;
-            esac
-            shift
-        done
-
-        echo "${args[@]}"
-    fi
-
-    return ${ret}
-}
-
 function parameters_selection() {
     function dev_selection() {
         local dev="$1"; shift
@@ -77,8 +33,7 @@ function parameters_selection() {
         done
 
         sel=$(whiptail --title "${title}" --radiolist "Please select one of options" \
-            $(get_center_window_position_row_col) \
-            $(($(get_center_window_position_row_col "height") / 3)) \
+            0 0 0\
             "${lists[@]}" --nocancel --ok-button 'done' --clear \
             3>&1 1>&2 2>&3)
 
@@ -189,8 +144,7 @@ function parameters_selection() {
             done
 
             sel=$(whiptail --title "Whiptail Color Scheme" --radiolist "Please select one of color scheme" \
-                $(get_center_window_position_row_col) \
-                $(($(get_center_window_position_row_col "height") / 3)) \
+                0 0 0\
                 "${lists[@]}" --nocancel --ok-button 'done' --clear\
                 3>&1 1>&2 2>&3)
 
@@ -215,8 +169,7 @@ function parameters_selection() {
             menu=$(whiptail \
                 --title "AMI EC" \
                 --menu "Please enter one of options to select" \
-                $(get_center_window_position_row_col) \
-                $(($(get_center_window_position_row_col "height") / 3)) \
+                0 0 0\
                 "SoC Vendor"   "    ${info["soc_vendor"]}" \
                 "SoC Series"   "    ${info["soc_series"]}" \
                 "Ec Vendor"    "    ${info["ec_vendor"]}" \
